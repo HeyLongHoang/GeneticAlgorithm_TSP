@@ -6,9 +6,9 @@ public class GeneticAlgorithm {
 
 	public static final double MUTATION_RATE = 0.1;
 	public static final double CROSSOVER_RATE = 0.9;
-	public static final int TOURNAMENT_SELECTION_SIZE = 15;
+	public static final int TOURNAMENT_SELECTION_SIZE = 20;
 	public static final int POPULATION_SIZE = 100;
-	public static final int NUMBER_OF_ELITE_ROUTES = 5;
+	public static final int NUMBER_OF_ELITE_ROUTES = 10;
 	public static final int NUMBER_OF_GENERATIONS = 500;
 	private ArrayList<City> initialRoute = null;
 
@@ -29,13 +29,24 @@ public class GeneticAlgorithm {
 		for (int i = 0; i < NUMBER_OF_ELITE_ROUTES; i++) {
 			crossoverPopulation.getRoutes().set(i, population.getRoutes().get(i));
 		}
-		for (int i = NUMBER_OF_ELITE_ROUTES; i < crossoverPopulation.getRoutes().size(); i++) {
+		for (int i = NUMBER_OF_ELITE_ROUTES; i < crossoverPopulation.getRoutes().size(); i += 2) {
 			if (Math.random() < CROSSOVER_RATE) {
 				Route r1 = selectTournamentPopulation(population).getRoutes().get(0);
 				Route r2 = selectTournamentPopulation(population).getRoutes().get(0);
-				crossoverPopulation.getRoutes().set(i, crossoverRoute(r1, r2));
+				while (r1.equals(r2))
+					r2 = selectTournamentPopulation(population).getRoutes().get(0);
+
+				Route[] crossoverRoutes = crossoverRoute(r1, r2);
+
+				crossoverPopulation.getRoutes().set(i, crossoverRoutes[0]);
+				if (i + 1 == crossoverPopulation.getRoutes().size())
+					break;
+				crossoverPopulation.getRoutes().set(i + 1, crossoverRoutes[1]);
 			} else {
 				crossoverPopulation.getRoutes().set(i, population.getRoutes().get(i));
+				if (i + 1 == crossoverPopulation.getRoutes().size())
+					break;
+				crossoverPopulation.getRoutes().set(i + 1, population.getRoutes().get(i + 1));
 			}
 		}
 		return crossoverPopulation;
@@ -50,8 +61,10 @@ public class GeneticAlgorithm {
 		return mutatePopulation;
 	}
 
-	private Route crossoverRoute(Route route1, Route route2) {
-		Route crossoverRoute = new Route(this);
+	private Route[] crossoverRoute(Route route1, Route route2) {
+		Route[] crossoverRoutes = new Route[2];
+		crossoverRoutes[0] = new Route(this);
+		crossoverRoutes[1] = new Route(this);
 		Route tempRoute1 = route1;
 		Route tempRoute2 = route2;
 
@@ -60,13 +73,19 @@ public class GeneticAlgorithm {
 			tempRoute2 = route1;
 		}
 
-		for (int i = 0; i < crossoverRoute.getCities().size() / 2; i++) {
-			crossoverRoute.getCities().set(i, tempRoute1.getCities().get(i));
+		// single point random split
+		int splitPoint = (int) (Math.random() * (crossoverRoutes[0].getCities().size() - 2)) + 1;
+		for (int i = 0; i < splitPoint / 2; i++) {
+			crossoverRoutes[0].getCities().set(i, tempRoute1.getCities().get(i));
+			crossoverRoutes[1].getCities().set(i, tempRoute2.getCities().get(i));
 		}
-		return fillNullsInCrossoverRoute(crossoverRoute, tempRoute2);
+
+		fillNullsInCrossoverRoute(crossoverRoutes[0], tempRoute2);
+		fillNullsInCrossoverRoute(crossoverRoutes[1], tempRoute1);
+		return crossoverRoutes;
 	}
 
-	private Route fillNullsInCrossoverRoute(Route crossoverRoute, Route route) {
+	private void fillNullsInCrossoverRoute(Route crossoverRoute, Route route) {
 		// Fill nulls in crossoverRoute with cities from Route that are not in
 		// crossoverRoute
 		route.getCities().stream().filter(x -> !crossoverRoute.getCities().contains(x)).forEach(cityX -> {
@@ -77,7 +96,6 @@ public class GeneticAlgorithm {
 				}
 			}
 		});
-		return crossoverRoute;
 	}
 
 	private Route mutateRoute(Route route) {

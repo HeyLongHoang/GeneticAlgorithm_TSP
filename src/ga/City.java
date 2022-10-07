@@ -34,4 +34,13 @@ public class City {
 		double dLongitude = this.getLongitude() - otherCity.getLongitude();
 		return Math.sqrt(Math.pow(dLatitude, 2) + Math.pow(dLongitude, 2));
 	}
+
+	@Override
+	public boolean equals(Object city) {
+		if (!(city instanceof City))
+			return false;
+		if (this.getName() == ((City) city).getName())
+			return true;
+		return false;
+	}
 }

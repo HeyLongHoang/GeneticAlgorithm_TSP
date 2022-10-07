@@ -47,4 +47,18 @@ public class Route {
 	public String toString() {
 		return Arrays.toString(cities.toArray());
 	}
+
+	@Override
+	public boolean equals(Object route) {
+		if (!(route instanceof Route))
+			return false;
+		if (this.getCities().size() != ((Route) route).getCities().size())
+			return false;
+		for (int i = 0; i < this.getCities().size(); i++) {
+			City otherCity = ((Route) route).getCities().get(i);
+			if (!this.getCities().get(i).equals(otherCity))
+				return false;
+		}
+		return true;
+	}
 }
